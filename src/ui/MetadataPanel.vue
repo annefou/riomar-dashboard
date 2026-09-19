@@ -2,6 +2,7 @@
 import { ref } from "vue";
 
 import type { ROCrateMetadata } from "@/lib/data/rocrateResolver";
+import NanopubEmbed from "@/ui/NanopubEmbed.vue";
 
 defineProps<{
   metadata: ROCrateMetadata;
@@ -108,15 +109,12 @@ const isOpen = ref(true);
       <div v-if="metadata.claims.length > 0" class="section">
         <h3>Claims</h3>
         <div v-for="(c, i) in metadata.claims" :key="i" class="claim">
-          <p>{{ c.text }}</p>
-          <a
+          <NanopubEmbed
             v-if="c.nanopubURI"
-            :href="c.nanopubURI"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="nanopub-link"
-            >nanopub</a
-          >
+            :uri="c.nanopubURI"
+            bg-color="#141414"
+          />
+          <p v-else>{{ c.text }}</p>
         </div>
       </div>
 
@@ -325,15 +323,9 @@ h3 {
   margin: 0;
 }
 
-.nanopub-link {
-  display: inline-block;
-  margin-top: 0.3rem;
-  font-size: 0.8rem;
-  color: #7cb3ff;
-  text-decoration: none;
-}
-
-.nanopub-link:hover {
-  text-decoration: underline;
+.claim:has(.nanopub-embed) {
+  background: none;
+  border-left: none;
+  padding: 0;
 }
 </style>
