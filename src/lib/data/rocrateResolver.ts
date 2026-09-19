@@ -5,6 +5,8 @@
  */
 
 const RO_ID_PREFIX = "https://w3id.org/ro-id/";
+import { nanopubArtifactCode } from "@/lib/data/nanopubs";
+
 const ROHUB_API = "https://api.rohub.org/api/";
 
 // schema.org vocabulary
@@ -180,9 +182,10 @@ export async function resolveROCrateWithMetadata(
     url: r.url,
   }));
 
-  // Find nanopub resources (Bibliographic Resources with sciencelive URLs)
+  // Find nanopub resources, whatever their ROHub type (Nanopublication,
+  // Bibliographic Resource, ...): any resource whose URL is a nanopub URI
   metadata.nanopubResources = typedResources.filter(
-    (r) => r.type === "Bibliographic Resource" && r.url?.includes("sciencelive")
+    (r) => r.type === "Nanopublication" || nanopubArtifactCode(r.url) !== null
   );
 
   // --- Resolve dataset URL via ViewAction ---

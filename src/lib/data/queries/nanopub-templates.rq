@@ -1,0 +1,19 @@
+# Label and template of a list of nanopublications, identified by artifact code
+# (so both the w3id.org/np/ and w3id.org/sciencelive/np/ forms match).
+#
+# Placeholder: `VALUES_CODES` - replaced by a list of quoted artifact codes.
+PREFIX npa: <http://purl.org/nanopub/admin/>
+PREFIX np: <http://www.nanopub.org/nschema#>
+PREFIX nt: <https://w3id.org/np/o/ntemplate/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?code ?np ?label ?template ?templateLabel WHERE {
+  VALUES ?code { VALUES_CODES }
+  GRAPH npa:graph {
+    ?np npa:artifactCode ?code ;
+        np:hasPublicationInfo ?pubinfo .
+    OPTIONAL { ?np rdfs:label ?label }
+  }
+  GRAPH ?pubinfo { ?np nt:wasCreatedFromTemplate ?template }
+  OPTIONAL { GRAPH npa:graph { ?template rdfs:label ?templateLabel } }
+}

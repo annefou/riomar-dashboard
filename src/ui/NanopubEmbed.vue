@@ -7,44 +7,33 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 
+import type { NanopubEmbedStyle } from "@/lib/data/nanopubs";
+import { resolvableNanopubUri } from "@/lib/data/nanopubs";
+
 const props = withDefaults(
   defineProps<{
     uri: string;
-    theme?: "light" | "dark";
-    primaryColor?: string;
-    bgColor?: string;
+    // Style set by the dashboard creator; unset values keep the Science Live default
+    embedStyle?: NanopubEmbedStyle;
   }>(),
-  {
-    theme: "dark",
-    primaryColor: undefined,
-    bgColor: undefined,
-  }
+  { embedStyle: () => ({}) }
 );
 
 const EMBED_URL =
   import.meta.env.VITE_SCIENCELIVE_EMBED_URL ??
   "https://platform.sciencelive4all.org/embed/view";
 
-// Science Live mints nanopubs under w3id.org/sciencelive/np/, which does not
-// serve RDF; the same nanopub is served as RDF under w3id.org/np/.
-function toResolvableUri(uri: string): string {
-  const code = uri.match(/\/(RA[A-Za-z0-9_-]{43})/)?.[1];
-  return code ? `https://w3id.org/np/${code}` : uri;
-}
-
 const src = computed(() => {
   const params = new URLSearchParams({
-    uri: toResolvableUri(props.uri),
-    theme: props.theme,
+    uri: resolvableNanopubUri(props.uri),
     showShare: "false",
     showCitation: "false",
     showReferences: "false",
   });
-  if (props.primaryColor) {
-    params.set("primaryColor", props.primaryColor.replace("#", ""));
-  }
-  if (props.bgColor) {
-    params.set("bgColor", props.bgColor.replace("#", ""));
+  for (const [key, value] of Object.entries(props.embedStyle)) {
+    if (value) {
+      params.set(key, value);
+    }
   }
   return `${EMBED_URL}?${params}`;
 });

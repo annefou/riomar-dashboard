@@ -1,12 +1,13 @@
 <script lang="ts" setup>
 import { useEventListener } from "@vueuse/core";
 import { storeToRefs } from "pinia";
-import { ref, onBeforeMount, type Ref } from "vue";
+import { computed, ref, onBeforeMount, type Ref } from "vue";
 
 import GlobeView from "./GlobeView.vue";
 
 import { setAuthToken } from "@/lib/data/authStore";
 import { GRID_TYPES, type T_GRID_TYPES } from "@/lib/data/gridTypeDetector";
+import { collectNanopubs, embedStyleFromParams } from "@/lib/data/nanopubs";
 import {
   isROCratePID,
   resolveROCrateWithMetadata,
@@ -15,6 +16,7 @@ import {
 import { STORE_PARAM_MAPPING, useUrlParameterStore } from "@/store/paramStore";
 import { useGlobeControlStore } from "@/store/store";
 import MetadataPanel from "@/ui/MetadataPanel.vue";
+import NanopubPanel from "@/ui/NanopubPanel.vue";
 import type { TURLParameterValues } from "@/utils/urlParams";
 
 type TParams = Partial<Record<TURLParameterValues, string>>;
@@ -28,6 +30,20 @@ const resolving = ref(true);
 const ready = ref(false);
 const params: Ref<TParams> = ref({});
 const crateMetadata: Ref<ROCrateMetadata | null> = ref(null);
+
+// Nanopubs of the FDO, shown in their own panel with the style chosen by
+// the dashboard creator (::npTheme=, ::npPrimaryColor=, ...)
+const nanopubs = computed(() =>
+  crateMetadata.value
+    ? collectNanopubs(
+        crateMetadata.value.claims,
+        crateMetadata.value.nanopubResources
+      )
+    : []
+);
+const nanopubEmbedStyle = computed(() =>
+  embedStyleFromParams(params.value as Record<string, string>)
+);
 
 const store = useGlobeControlStore();
 const { userBoundsLow, userBoundsHigh } = storeToRefs(store);
@@ -162,6 +178,7 @@ onBeforeMount(() => {
   <template v-else>
     <GlobeView :src="src" />
     <MetadataPanel v-if="crateMetadata" :metadata="crateMetadata" />
+    <NanopubPanel :nanopubs="nanopubs" :embed-style="nanopubEmbedStyle" />
   </template>
 </template>
 
