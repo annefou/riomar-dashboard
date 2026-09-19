@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Passkey Key Test</title>
+<style>
+:root {
+  --ground: #f5f6f8; --surface: #ffffff; --ink: #18202a; --muted: #5a6573; --line: #d6dbe2;
+  --accent: #2d5bd1; --accent-ink: #ffffff; --ok: #1d7a46; --ok-soft: #e1f3e8; --bad: #b3261e; --bad-soft: #fbe4e2;
+  --warn: #8a5a00; --warn-soft: #fbefd2; --code: #eef1f5;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #11151b; --surface: #1a2029; --ink: #e4e9ef; --muted: #9aa6b4; --line: #2c3541;
+    --accent: #7ea2ff; --accent-ink: #0d1422; --ok: #6fd39a; --ok-soft: #173424; --bad: #ff8f86; --bad-soft: #3a1b19;
+    --warn: #f0c46a; --warn-soft: #33290f; --code: #232b36;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #11151b; --surface: #1a2029; --ink: #e4e9ef; --muted: #9aa6b4; --line: #2c3541;
+  --accent: #7ea2ff; --accent-ink: #0d1422; --ok: #6fd39a; --ok-soft: #173424; --bad: #ff8f86; --bad-soft: #3a1b19;
+  --warn: #f0c46a; --warn-soft: #33290f; --code: #232b36;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--ink); font: 16px/1.5 var(--sans); padding: 0 16px; }
+main { max-width: 760px; margin: 0 auto; padding-block: 32px 56px; display: grid; gap: 20px; }
+h1 { font-size: 1.7rem; margin: 0; text-wrap: balance; }
+h2 { font-size: 1.1rem; margin: 0; }
+p { margin: 0; max-width: 66ch; }
+.lead { color: var(--muted); }
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; }
+.step-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.step p { color: var(--muted); }
+button { font: 600 0.95rem var(--sans); color: var(--accent-ink); background: var(--accent); border: none; border-radius: 8px; padding: 9px 16px; cursor: pointer; justify-self: start; }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+button.secondary { background: none; color: var(--accent); border: 1px solid var(--line); }
+button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.status { font-size: 0.85rem; font-weight: 600; border-radius: 999px; padding: 2px 10px; white-space: nowrap; }
+.status.idle { color: var(--muted); background: var(--code); }
+.status.ok { color: var(--ok); background: var(--ok-soft); }
+.status.bad { color: var(--bad); background: var(--bad-soft); }
+.status.warn { color: var(--warn); background: var(--warn-soft); }
+.result { font-size: 0.93rem; }
+pre { margin: 0; background: var(--code); border-radius: 6px; padding: 10px 12px; font: 0.8rem/1.45 var(--mono); white-space: pre-wrap; word-break: break-all; }
+.checks { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 0.93rem; }
+.checks dt { color: var(--muted); }
+.checks dd { margin: 0; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+footer { color: var(--muted); font-size: 0.85rem; display: grid; gap: 6px; }
+</style>
+</head>
+<body>
+<main>
+  <header style="display:grid;gap:8px">
+    <h1>Can a passkey unlock your data key?</h1>
+    <p class="lead">A test for FAIR2Adapt controlled-access data. Your passkey (fingerprint, face or device PIN) unlocks a private key kept in this browser; that key opens a dataset key wrapped for you, exactly as fair-data-access does. Nothing leaves this page. Run the four steps in order and send the report at the end.</p>
+  </header>
+
+  <section class="step" aria-labelledby="s0">
+    <div class="step-head"><h2 id="s0">0 · This browser</h2><span class="status idle" id="st0">Checking…</span></div>
+    <dl class="checks" id="env"></dl>
+  </section>
+
+  <section class="step" aria-labelledby="s1">
+    <div class="step-head"><h2 id="s1">1 · Create a test passkey</h2><span class="status idle" id="st1">Not run</span></div>
+    <p>Creates a passkey named "fair2adapt-test" for this site, asking for its secret-derivation feature (PRF).</p>
+    <button type="button" id="b1">Create passkey</button>
+    <div class="result" id="r1"></div>
+  </section>
+
+  <section class="step" aria-labelledby="s2">
+    <div class="step-head"><h2 id="s2">2 · Create your data key pair</h2><span class="status idle" id="st2">Not run</span></div>
+    <p>Creates a key pair and locks the private key with your passkey. The public key is what the ROHub profile would hold.</p>
+    <button type="button" id="b2" disabled>Create and lock key pair</button>
+    <div class="result" id="r2"></div>
+  </section>
+
+  <section class="step" aria-labelledby="s3">
+    <div class="step-head"><h2 id="s3">3 · Simulate an access grant</h2><span class="status idle" id="st3">Not run</span></div>
+    <p>Plays the key server: encrypts a sample dataset and wraps its key for your public key (ECDH-ES P-256 + HKDF-SHA256 + AES-256-GCM).</p>
+    <button type="button" id="b3" disabled>Grant access to the sample</button>
+    <div class="result" id="r3"></div>
+  </section>
+
+  <section class="step" aria-labelledby="s4">
+    <div class="step-head"><h2 id="s4">4 · Open the data with your passkey</h2><span class="status idle" id="st4">Not run</span></div>
+    <p>Asks for your passkey, unlocks the private key, unwraps the dataset key and decrypts the sample.</p>
+    <button type="button" id="b4" disabled>Open the data</button>
+    <div class="result" id="r4"></div>
+  </section>
+
+  <section class="step" aria-labelledby="s5">
+    <div class="step-head"><h2 id="s5">Report</h2></div>
+    <pre id="report">Run the steps above.</pre>
+    <div class="row">
+      <button type="button" class="secondary" id="copy">Copy report</button>
+      <button type="button" class="secondary" id="reset">Reset this test</button>
+    </div>
+  </section>
+
+  <footer>
+    <p>Test only: the locked private key is kept in this browser's storage; the passkey stays on your device (or in your password manager). Remove the "fair2adapt-test" passkey from your device settings when done.</p>
+    <p>The same code is checked against the Python fair-data-access package: keys wrapped by one are unwrapped by the other.</p>
+  </footer>
+</main>
+
+<script type="module">
+import * as c from "./prf-crypto.js";
+
+const $ = (id) => document.getElementById(id);
+const STORE = "fair2adapt-prf-test";
+const SALT = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode("fair2adapt-fdo-key-v1")));
+const report = { page: location.origin + location.pathname, userAgent: navigator.userAgent, steps: {} };
+let state = load();
+
+function load() { try { return JSON.parse(localStorage.getItem(STORE)) ?? {}; } catch { return {}; } }
+function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch { /* storage blocked */ } }
+function setStatus(n, cls, text) { const s = $("st" + n); s.className = "status " + cls; s.textContent = text; }
+function note(n, html) { $("r" + n).innerHTML = html; }
+function record(n, ok, detail) { report.steps[n] = { ok, detail }; $("report").textContent = JSON.stringify(report, null, 2); }
+function enable() {
+  $("b2").disabled = !state.credId;
+  $("b3").disabled = !state.publicPem;
+  $("b4").disabled = !state.envelope;
+}
+async function prfSecret() {
+  const assertion = await navigator.credentials.get({ publicKey: {
+    challenge: crypto.getRandomValues(new Uint8Array(32)),
+    allowCredentials: [{ type: "public-key", id: c.b64.decode(state.credId) }],
+    userVerification: "required",
+    extensions: { prf: { eval: { first: SALT } } },
+  } });
+  const first = assertion.getClientExtensionResults()?.prf?.results?.first;
+  if (!first) throw new Error("The passkey did not return a PRF secret: this browser or authenticator does not support PRF.");
+  return new Uint8Array(first);
+}
+function fail(n, e) {
+  const msg = e?.name === "NotAllowedError" ? "Cancelled or not allowed (" + e.message + ")" : (e?.message ?? String(e));
+  setStatus(n, "bad", "Failed"); note(n, `<p>${msg}</p>`); record(n, false, msg);
+}
+
+// Step 0: environment
+(async () => {
+  const rows = [];
+  const add = (k, v) => rows.push(`<dt>${k}</dt><dd>${v}</dd>`);
+  const webauthn = "PublicKeyCredential" in window;
+  add("Secure context", window.isSecureContext ? "yes" : "no");
+  add("WebAuthn", webauthn ? "yes" : "no");
+  let platform = "unknown", prfCap = "unknown (browser does not report it)";
+  if (webauthn) {
+    try { platform = (await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()) ? "yes" : "no"; } catch { /* ignore */ }
+    try {
+      const caps = await PublicKeyCredential.getClientCapabilities?.();
+      if (caps && "extension:prf" in caps) prfCap = caps["extension:prf"] ? "yes" : "no";
+    } catch { /* ignore */ }
+  }
+  add("Built-in authenticator (fingerprint, face, PIN)", platform);
+  add("PRF reported by browser", prfCap);
+  add("Previous test on this browser", state.credId ? "passkey created" + (state.publicPem ? ", key pair locked" : "") : "none");
+  $("env").innerHTML = rows.join("");
+  const ok = webauthn && window.isSecureContext;
+  setStatus(0, ok ? (prfCap === "no" ? "warn" : "ok") : "bad", ok ? (prfCap === "no" ? "PRF not reported" : "Ready") : "Not supported");
+  record(0, ok, { secureContext: window.isSecureContext, webauthn, platform, prfReported: prfCap });
+  enable();
+})();
+
+// Step 1: passkey with PRF
+$("b1").addEventListener("click", async () => {
+  try {
+    const cred = await navigator.credentials.create({ publicKey: {
+      rp: { name: "FAIR2Adapt key test" },
+      user: { id: crypto.getRandomValues(new Uint8Array(16)), name: "fair2adapt-test", displayName: "FAIR2Adapt test" },
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+      authenticatorSelection: { residentKey: "required", userVerification: "required" },
+      extensions: { prf: { eval: { first: SALT } } },
+    } });
+    const prf = cred.getClientExtensionResults()?.prf;
+    state = { credId: c.b64.encode(cred.rawId) }; save();
+    const enabled = prf?.enabled === true || !!prf?.results?.first;
+    const where = cred.authenticatorAttachment ?? "unknown";
+    setStatus(1, enabled ? "ok" : "warn", enabled ? "Created, PRF on" : "Created, PRF unclear");
+    note(1, `<p>Passkey created (${where === "platform" ? "on this device" : where === "cross-platform" ? "on a security key or phone" : "authenticator: " + where}). PRF: ${enabled ? "supported" : "not confirmed yet; step 2 will tell"}.</p>`);
+    record(1, true, { prfEnabled: prf?.enabled ?? null, prfAtCreate: !!prf?.results?.first, attachment: where });
+    enable();
+  } catch (e) { fail(1, e); }
+});
+
+// Step 2: key pair locked by the passkey
+$("b2").addEventListener("click", async () => {
+  try {
+    const t0 = performance.now();
+    const secret = await prfSecret();
+    const { pkcs8, publicPem } = await c.generateUserKeyPair();
+    state.protectedKey = await c.protectPrivateKey(pkcs8, secret);
+    state.publicPem = publicPem; delete state.envelope; save();
+    setStatus(2, "ok", "Locked");
+    note(2, `<p>Private key locked with your passkey (${Math.round(performance.now() - t0)} ms including the prompt). Public key:</p><pre>${publicPem}</pre>`);
+    record(2, true, { ms: Math.round(performance.now() - t0) });
+    enable();
+  } catch (e) { fail(2, e); }
+});
+
+// Step 3: simulated grant
+$("b3").addEventListener("click", async () => {
+  try {
+    const datasetKey = crypto.getRandomValues(new Uint8Array(32));
+    const sample = new TextEncoder().encode("Hamburg building-level flood-risk example: 37 building footprints, 2 statistical units. Decrypted in your browser.");
+    state.envelope = await c.wrapKey(datasetKey, state.publicPem);
+    state.data = c.b64.encode(await c.encryptData(datasetKey, sample)); save();
+    setStatus(3, "ok", "Granted");
+    note(3, `<p>Wrapped key, as the key server would publish it:</p><pre>${state.envelope}</pre>`);
+    record(3, true, "wrapped key and encrypted sample created");
+    enable();
+  } catch (e) { fail(3, e); }
+});
+
+// Step 4: open with the passkey
+$("b4").addEventListener("click", async () => {
+  try {
+    const t0 = performance.now();
+    const secret = await prfSecret();
+    const priv = await c.unlockPrivateKey(state.protectedKey, secret);
+    const key = await c.unwrapKey(state.envelope, priv);
+    const text = new TextDecoder().decode(await c.decryptData(key, c.b64.decode(state.data)));
+    setStatus(4, "ok", "Decrypted");
+    note(4, `<p>Decrypted (${Math.round(performance.now() - t0)} ms including the prompt):</p><pre>${text}</pre>`);
+    record(4, true, { ms: Math.round(performance.now() - t0) });
+  } catch (e) { fail(4, e); }
+});
+
+$("copy").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText($("report").textContent); $("copy").textContent = "Copied"; }
+  catch { $("copy").textContent = "Select the report and copy it"; }
+});
+$("reset").addEventListener("click", () => {
+  try { localStorage.removeItem(STORE); } catch { /* ignore */ }
+  location.reload();
+});
+</script>
+</body>
+</html>
